@@ -1,119 +1,167 @@
 import streamlit as st
 import pandas as pd
+import altair as alt
+from streamlit_autorefresh import st_autorefresh
 
+from function.anedya import anedya_config
+from function.anedya import fetchHumidityData
+from function.anedya import fetchTemperatureData
 
-st.title("📊 Data evaluation app")
+# Set the page configuration as the first Streamlit command
+st.set_page_config(page_title="SMART HOME", layout="wide")
 
-st.write(
-    "We are so glad to see you here. ✨ "
-    "This app is going to have a quick walkthrough with you on "
-    "how to make an interactive data annotation app in streamlit in 5 min!"
-)
+# nodeId = "20deeee8-f8ae-11ee-9dd8-c3aa61afe2fb"  # get it from anedya dashboard -> project -> node
+nodeId = "4229885e-3456-11ef-9ecc-a1461caa74a3"  # get it from anedya dashboard -> project -> node
+apiKey = "829d921000ee5204aa1cdb4fe4d2002fe7bbbe2c157983dad9bd7658f40d7229"  # aneyda project apikey
 
-st.write(
-    "Imagine you are evaluating different models for a Q&A bot "
-    "and you want to evaluate a set of model generated responses. "
-    "You have collected some user data. "
-    "Here is a sample question and response set."
-)
+# Uncomment to show count
+# count = st_autorefresh(interval=30000, limit=None, key="auto-refresh-handler")
+st_autorefresh(interval=30000, limit=None, key="auto-refresh-handler")
 
-data = {
-    "Questions": [
-        "Who invented the internet?",
-        "What causes the Northern Lights?",
-        "Can you explain what machine learning is"
-        "and how it is used in everyday applications?",
-        "How do penguins fly?",
-    ],
-    "Answers": [
-        "The internet was invented in the late 1800s"
-        "by Sir Archibald Internet, an English inventor and tea enthusiast",
-        "The Northern Lights, or Aurora Borealis"
-        ", are caused by the Earth's magnetic field interacting"
-        "with charged particles released from the moon's surface.",
-        "Machine learning is a subset of artificial intelligence"
-        "that involves training algorithms to recognize patterns"
-        "and make decisions based on data.",
-        " Penguins are unique among birds because they can fly underwater. "
-        "Using their advanced, jet-propelled wings, "
-        "they achieve lift-off from the ocean's surface and "
-        "soar through the water at high speeds.",
-    ],
-}
+# --------------- HELPER FUNCTIONS -----------------------
+def V_SPACE(lines):
+    for _ in range(lines):
+        st.write("&nbsp;")
 
-df = pd.DataFrame(data)
+humidityData = pd.DataFrame()
+temperatureData = pd.DataFrame()
 
-st.write(df)
+def main():
+    global humidityData, temperatureData
+    anedya_config(NODE_ID=nodeId, API_KEY=apiKey)
 
-st.write(
-    "Now I want to evaluate the responses from my model. "
-    "One way to achieve this is to use the very powerful `st.data_editor` feature. "
-    "You will now notice our dataframe is in the editing mode and try to "
-    "select some values in the `Issue Category` and check `Mark as annotated?` once finished 👇"
-)
+    # Initialize the log in state if does not exist
+    if "LoggedIn" not in st.session_state:
+        st.session_state.LoggedIn = False
 
-df["Issue"] = [True, True, True, False]
-df["Category"] = ["Accuracy", "Accuracy", "Completeness", ""]
+    if "CurrentHumidity" not in st.session_state:
+        st.session_state.CurrentHumidity = 0
 
-new_df = st.data_editor(
-    df,
-    column_config={
-        "Questions": st.column_config.TextColumn(width="medium", disabled=True),
-        "Answers": st.column_config.TextColumn(width="medium", disabled=True),
-        "Issue": st.column_config.CheckboxColumn("Mark as annotated?", default=False),
-        "Category": st.column_config.SelectboxColumn(
-            "Issue Category",
-            help="select the category",
-            options=["Accuracy", "Relevance", "Coherence", "Bias", "Completeness"],
-            required=False,
-        ),
-    },
-)
+    if "CurrentTemperature" not in st.session_state:
+        st.session_state.CurrentTemperature = 0
 
-st.write(
-    "You will notice that we changed our dataframe and added new data. "
-    "Now it is time to visualize what we have annotated!"
-)
+    if st.session_state.LoggedIn is False:
+        drawLogin()
+    else:
+        humidityData = fetchHumidityData()
+        temperatureData = fetchTemperatureData()
 
-st.divider()
+        drawDashboard()
 
-st.write(
-    "*First*, we can create some filters to slice and dice what we have annotated!"
-)
+def drawLogin():
+    cols = st.columns([1, 0.8, 1], gap='small')
+    with cols[0]:
+        pass
+    with cols[1]:
+        st.markdown("<h1 style='color:navy;'>SMART HOME DATA MONITORING</h1>", unsafe_allow_html=True)
+        username_inp = st.text_input("Username")
+        password_inp = st.text_input("Password", type="password")
+        submit_button = st.button(label="Submit")
 
-col1, col2 = st.columns([1, 1])
-with col1:
-    issue_filter = st.selectbox("Issues or Non-issues", options=new_df.Issue.unique())
-with col2:
-    category_filter = st.selectbox(
-        "Choose a category",
-        options=new_df[new_df["Issue"] == issue_filter].Category.unique(),
-    )
+        if submit_button:
+            if username_inp == "admin" and password_inp == "admin":
+                st.session_state.LoggedIn = True
+                st.rerun()
+            else:
+                st.error("Invalid Credential!")
+    with cols[2]:
+        pass
 
-st.dataframe(
-    new_df[(new_df["Issue"] == issue_filter) & (new_df["Category"] == category_filter)]
-)
+def drawDashboard():
+    headercols = st.columns([1, 0.1, 0.1], gap="small")
+    with headercols[0]:
+        st.markdown("<h1 style='color:navy;'>SMART HOME DATA MONITORING</h1>", unsafe_allow_html=True)
+    with headercols[1]:
+         st.button("Refresh")
 
-st.markdown("")
-st.write(
-    "*Next*, we can visualize our data quickly using `st.metrics` and `st.bar_plot`"
-)
+    with headercols[2]:
+        logout = st.button("Logout")
 
-issue_cnt = len(new_df[new_df["Issue"] == True])
-total_cnt = len(new_df)
-issue_perc = f"{issue_cnt/total_cnt*100:.0f}%"
+    if logout:
+        st.session_state.LoggedIn = False
+        st.rerun()
 
-col1, col2 = st.columns([1, 1])
-with col1:
-    st.metric("Number of responses", issue_cnt)
-with col2:
-    st.metric("Annotation Progress", issue_perc)
+    st.markdown("<p style='color:navy;'>This dashboard provides temperature and humidity data for the Smart Home Data Monitoring project!</p>", unsafe_allow_html=True)
 
-df_plot = new_df[new_df["Category"] != ""].Category.value_counts().reset_index()
+    st.subheader(body="Current Status", anchor=False)
+    cols = st.columns(2, gap="medium")
+    with cols[0]:
+        st.metric(label="Humidity", value=str(st.session_state.CurrentHumidity) + " %")
+    with cols[1]:
+        st.metric(label="Temperature", value=str(st.session_state.CurrentTemperature) + "  °C")
+    # with cols[2]:
+    #    st.metric(label="Refresh Count", value=count)
 
-st.bar_chart(df_plot, x="Category", y="count")
+    charts = st.columns(2, gap="small")
+    with charts[0]:
+        st.subheader(body="Humidity", anchor=False)
+        if humidityData.empty:
+            st.write("No Data !!")
+        else:
+            humidity_chart_an = alt.Chart(data=humidityData).mark_area(
+                line={'color': '#1fa22f'},
+                color=alt.Gradient(
+                    gradient='linear',
+                    stops=[alt.GradientStop(color='#1fa22f', offset=1),
+                           alt.GradientStop(color='rgba(255,255,255,0)', offset=0)],
+                    x1=1,
+                    x2=1,
+                    y1=1,
+                    y2=0,
+                ),
+                interpolate='monotone',
+                cursor='crosshair'
+            ).encode(
+                x=alt.X(
+                    shorthand="Datetime:T",
+                    axis=alt.Axis(format="%Y-%m-%d %H:%M:%S", title="Datetime", tickCount=10, grid=True, tickMinStep=5),
+                ),  # T indicates temporal (time-based) data
+                y=alt.Y(
+                    "aggregate:Q",
+                    scale=alt.Scale(domain=[20, 65]),
+                    axis=alt.Axis(title="Humidity (%)", grid=True, tickCount=10),
+                ),  # Q indicates quantitative data
+                tooltip=[alt.Tooltip('Datetime:T', format="%Y-%m-%d %H:%M:%S", title="Time",),
+                         alt.Tooltip('aggregate:Q', format="0.2f", title="Value")],
+            ).properties(height=400).interactive()
 
-st.write(
-    "Here we are at the end of getting started with streamlit! Happy Streamlit-ing! :balloon:"
-)
+            # Display the Altair chart using Streamlit
+            st.altair_chart(humidity_chart_an, use_container_width=True)
 
+    with charts[1]:
+        st.subheader(body="Temperature", anchor=False)
+        if temperatureData.empty:
+            st.write("No Data !!")
+        else:
+            temperature_chart_an = alt.Chart(data=temperatureData).mark_area(
+                line={'color': '#1fa22f'},
+                color=alt.Gradient(
+                    gradient='linear',
+                    stops=[alt.GradientStop(color='#1fa22f', offset=1),
+                           alt.GradientStop(color='rgba(255,255,255,0)', offset=0)],
+                    x1=1,
+                    x2=1,
+                    y1=1,
+                    y2=0,
+                ),
+                interpolate='monotone',
+                cursor='crosshair'
+            ).encode(
+                x=alt.X(
+                    shorthand="Datetime:T",
+                    axis=alt.Axis(format="%Y-%m-%d %H:%M:%S", title="Datetime", tickCount=10, grid=True, tickMinStep=5),
+                ),  # T indicates temporal (time-based) data
+                y=alt.Y(
+                    "aggregate:Q",
+                    # scale=alt.Scale(domain=[0, 100]),
+                    scale=alt.Scale(zero=False, domain=[10, 50]),
+                    axis=alt.Axis(title="Temperature (°C)", grid=True, tickCount=10),
+                ),  # Q indicates quantitative data
+                tooltip=[alt.Tooltip('Datetime:T', format="%Y-%m-%d %H:%M:%S", title="Time",),
+                         alt.Tooltip('aggregate:Q', format="0.2f", title="Value")],
+            ).properties(height=400).interactive()
+
+            st.altair_chart(temperature_chart_an, use_container_width=True)
+
+if __name__ == "__main__":
+    main()
