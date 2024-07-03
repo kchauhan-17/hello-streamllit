@@ -3,7 +3,7 @@ import requests
 import time
 import streamlit as st
 import pandas as pd
-import pytz  # Add this import for time zone conversion
+import pytz
 
 nodeId = "4229885e-3456-11ef-9ecc-a1461caa74a3"
 apiKey = "829d921000ee5204aa1cdb4fe4d2002fe7bbbe2c157983dad9bd7658f40d7229"
@@ -16,7 +16,6 @@ def anedya_config(NODE_ID, API_KEY):
 
 
 def anedya_sendCommand(COMMAND_NAME, COMMAND_DATA):
-
     url = "https://api.anedya.io/v1/commands/send"
     apiKey_in_formate = "Bearer " + apiKey
 
@@ -34,9 +33,6 @@ def anedya_sendCommand(COMMAND_NAME, COMMAND_DATA):
     headers = {"Content-Type": "application/json", "Authorization": apiKey_in_formate}
 
     requests.request("POST", url, headers=headers, data=payload)
-
-    # print(response.text)
-    # st.write(response.text)
 
 
 def anedya_setValue(KEY, VALUE):
@@ -59,8 +55,6 @@ def anedya_setValue(KEY, VALUE):
     }
     response = requests.request("POST", url, headers=headers, data=payload)
 
-    # print(response.status_code)
-    # print(payload)
     print(response.text)
     return response
 
@@ -91,13 +85,11 @@ def anedya_getValue(KEY):
         value = [data, 1]
     else:
         print(responseMessage)
-        # st.write("No previous value!!")
         value = [False, -1]
 
     return value
 
 
-# @st.cache_data(ttl=30, show_spinner=False)
 def fetchHumidityData() -> pd.DataFrame:
     url = "https://api.anedya.io/v1/aggregates/variable/byTime"
     apiKey_in_formate = "Bearer " + apiKey
@@ -143,35 +135,29 @@ def fetchHumidityData() -> pd.DataFrame:
     if response.status_code == 200:
         data_list = []
 
-        # Parse JSON string
         response_data = json.loads(response_message).get("data")
         for timeStamp, value in reversed(response_data.items()):
             for entry in reversed(value):
                 data_list.append(entry)
 
         if data_list:
-
             st.session_state.CurrentHumidity = round(data_list[0]["aggregate"], 2)
             df = pd.DataFrame(data_list)
-            # Convert timestamp to datetime and set it as the index
             df["Datetime"] = pd.to_datetime(df["timestamp"], unit="s")
-            local_tz = pytz.timezone("Asia/Kolkata")  # Change to your local time zone
+            local_tz = pytz.timezone("Asia/Kolkata")
             df["Datetime"] = df["Datetime"].dt.tz_localize("UTC").dt.tz_convert(local_tz)
             df.set_index("Datetime", inplace=True)
-            # Drop the original 'timestamp' column as it's no longer needed
             df.drop(columns=["timestamp"], inplace=True)
-            # print(df.head(70))
-            # Reset the index to prepare for Altair chart
             chart_data = df.reset_index()
+        else:
+            chart_data = pd.DataFrame()
 
         return chart_data
     else:
         st.write(response_message)
-        value = pd.DataFrame()
-        return value
+        return pd.DataFrame()
 
 
-# @st.cache_data(ttl=30, show_spinner=False)
 def fetchTemperatureData() -> pd.DataFrame:
     url = "https://api.anedya.io/v1/aggregates/variable/byTime"
     apiKey_in_formate = "Bearer " + apiKey
@@ -217,7 +203,6 @@ def fetchTemperatureData() -> pd.DataFrame:
     if response.status_code == 200:
         data_list = []
 
-        # Parse JSON string
         response_data = json.loads(response_message).get("data")
         for timeStamp, value in reversed(response_data.items()):
             for entry in reversed(value):
@@ -227,18 +212,15 @@ def fetchTemperatureData() -> pd.DataFrame:
             st.session_state.CurrentTemperature = round(data_list[0]["aggregate"], 2)
             df = pd.DataFrame(data_list)
             df["Datetime"] = pd.to_datetime(df["timestamp"], unit="s")
-            local_tz = pytz.timezone("Asia/Kolkata")  # Change to your local time zone
+            local_tz = pytz.timezone("Asia/Kolkata")
             df["Datetime"] = df["Datetime"].dt.tz_localize("UTC").dt.tz_convert(local_tz)
             df.set_index("Datetime", inplace=True)
-
-            # Droped the original 'timestamp' column as it's no longer needed
             df.drop(columns=["timestamp"], inplace=True)
-            # print(df.head())
-            # Reset the index to prepare for Altair chart
             chart_data = df.reset_index()
+        else:
+            chart_data = pd.DataFrame()
 
         return chart_data
     else:
         st.write(response_message)
-        Value = pd.DataFrame()
-        return Value
+        return pd.DataFrame()
