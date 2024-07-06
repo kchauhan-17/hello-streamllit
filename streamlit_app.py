@@ -10,10 +10,10 @@ from function.anedya import anedya_setValue
 from function.anedya import fetchHumidityData
 from function.anedya import fetchTemperatureData
 
-nodeId = "4229885e-3456-11ef-9ecc-a1461caa74a3"  # get it from anedya dashboard -> project -> node
-apiKey = "829d921000ee5204aa1cdb4fe4d2002fe7bbbe2c157983dad9bd7658f40d7229"  # aneyda project apikey
+nodeId = "4229885e-3456-11ef-9ecc-a1461caa74a3"  # get it from anedya dashboard -> project -> node 
+apiKey = "829d921000ee5204aa1cdb4fe4d2002fe7bbbe2c157983dad9bd7658f40d7229"  # anedya project apikey
 
-st.set_page_config(page_title="SMART HOME DASHBOARD", layout="wide")
+st.set_page_config(page_title="SMART HOME", layout="wide")
 
 # Uncomment to enable autorefresh
 count = st_autorefresh(interval=1000, limit=None, key="auto-refresh-handler")
@@ -59,10 +59,6 @@ def main():
         humidityData = fetchHumidityData()
         temperatureData = fetchTemperatureData()
 
-        # Debug statements to check the data
-        st.write("Humidity Data:", humidityData)
-        st.write("Temperature Data:", temperatureData)
-
         GetLED1Status()
         GetLED2Status()
 
@@ -73,7 +69,7 @@ def drawLogin():
     with cols[0]:
         pass
     with cols[1]:
-        st.markdown("<h1 style='color: navy;'>SMART HOME DASH BOARD</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='color: navy;'>Anedya Demo Dashboard</h1>", unsafe_allow_html=True)
         username_inp = st.text_input("Username")
         password_inp = st.text_input("Password", type="password")
         submit_button = st.button(label="Submit")
@@ -85,12 +81,12 @@ def drawLogin():
             else:
                 st.error("Invalid Credential!")
     with cols[2]:
-        pass
+        print()
 
 def drawDashboard():
     headercols = st.columns([1, 0.1, 0.1], gap="small")
     with headercols[0]:
-        st.markdown("<h1 style='color: navy;'>SMART HOME DASHBOARD</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='color: navy;'>SMART HOME Dashboard</h1>", unsafe_allow_html=True)
     with headercols[1]:
         st.button("Refresh")
     with headercols[2]:
@@ -100,7 +96,7 @@ def drawDashboard():
         st.session_state.LoggedIn = False
         st.rerun()
 
-    st.markdown("<p style='color: navy;'>This dashboard provides smart home data, also allowing you to control the LEDs remotely!</p>", unsafe_allow_html=True)
+    st.markdown("<p style='color: navy;'>This dashboard provides a Smart homme Data information , also allowing you to control the LEDs !</p>", unsafe_allow_html=True)
 
     st.subheader(body="Current Status", anchor=False)
     cols = st.columns(2, gap="medium")
@@ -127,7 +123,7 @@ def drawDashboard():
                 line={'color': '#1fa2ff'},
                 color=alt.Gradient(
                     gradient='linear',
-                    stops=[alt.GradientStop(color='#1fa2ff', offset=1),
+                    stops=[alt.GradientStop(color='#1fafff', offset=1),
                         alt.GradientStop(color='rgba(255,255,255,0)', offset=0)],
                     x1=1,
                     x2=1,
@@ -162,7 +158,7 @@ def drawDashboard():
                 line={'color': '#1fa2ff'},
                 color=alt.Gradient(
                     gradient='linear',
-                    stops=[alt.GradientStop(color='#1fa2ff', offset=1),
+                    stops=[alt.GradientStop(color='#1fafff', offset=1),
                         alt.GradientStop(color='rgba(255,255,255,0)', offset=0)],
                     x1=1,
                     x2=1,
@@ -178,6 +174,7 @@ def drawDashboard():
                 ),  # T indicates temporal (time-based) data
                 y=alt.Y(
                     "aggregate:Q",
+                    # scale=alt.Scale(domain=[0, 100]),
                     scale=alt.Scale(zero=False, domain=[10, 50]),
                     axis=alt.Axis(title="Temperature (°C)", grid=True, tickCount=10),
                 ),  # Q indicates quantitative data
