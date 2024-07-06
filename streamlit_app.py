@@ -36,10 +36,10 @@ def main():
         st.session_state.LoggedIn = False
 
     if "LED1ButtonText" not in st.session_state:
-        st.session_state.LED1ButtonText = "Turn LED 1 On!"
+        st.session_state.LED1ButtonText = " LED 1 On!"
 
     if "LED2ButtonText" not in st.session_state:
-        st.session_state.LED2ButtonText = "Turn LED 2 On!"
+        st.session_state.LED2ButtonText = " LED 2 On!"
 
     if "LED1State" not in st.session_state:
         st.session_state.LED1State = False
@@ -69,7 +69,7 @@ def drawLogin():
     with cols[0]:
         pass
     with cols[1]:
-        st.markdown("<h1 style='color: navy;'>Anedya Demo Dashboard</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='color: navy;'>SMART HOME</h1>", unsafe_allow_html=True)
         username_inp = st.text_input("Username")
         password_inp = st.text_input("Password", type="password")
         submit_button = st.button(label="Submit")
@@ -188,29 +188,29 @@ def operateLED1():
     if st.session_state.LED1State is False:
         anedya_sendCommand("LED1", "ON")
         anedya_setValue("LED1", True)
-        st.session_state.LED1ButtonText = "Turn LED 1 Off!"
+        st.session_state.LED1ButtonText = "LED 1 Off!"
         st.session_state.LED1State = True
-        st.toast("LED 1 turned on!")
+        st.toast("LED 1 on!")
     else:
-        st.session_state.LED1ButtonText = "Turn LED 1 On!"
+        st.session_state.LED1ButtonText = "LED 1 On!"
         st.session_state.LED1State = False
         anedya_sendCommand("LED1", "OFF")
         anedya_setValue("LED1", False)
-        st.toast("LED 1 turned off!")
+        st.toast("LED 1 off!")
 
 def operateLED2():
     if st.session_state.LED2State is False:
         anedya_sendCommand("LED2", "ON")
         anedya_setValue("LED2", True)
-        st.session_state.LED2ButtonText = "Turn LED 2 Off!"
+        st.session_state.LED2ButtonText = "LED 2 Off!"
         st.session_state.LED2State = True
-        st.toast("LED 2 turned on!")
+        st.toast("LED 2 on!")
     else:
-        st.session_state.LED2ButtonText = "Turn LED 2 On!"
+        st.session_state.LED2ButtonText = "LED 2 On!"
         st.session_state.LED2State = False
         anedya_sendCommand("LED2", "OFF")
         anedya_setValue("LED2", False)
-        st.toast("LED 2 turned off!")
+        st.toast("LED 2 off!")
 
 @st.cache_data(ttl=4, show_spinner=False)
 def GetLED1Status() -> list:
@@ -219,10 +219,10 @@ def GetLED1Status() -> list:
         on = value[0]
         if on:
             st.session_state.LED1State = True
-            st.session_state.LED1ButtonText = "Turn LED 1 Off!"
+            st.session_state.LED1ButtonText = "LED 1 Off!"
         else:
             st.session_state.LED1State = False
-            st.session_state.LED1ButtonText = "Turn LED 1 On!"
+            st.session_state.LED1ButtonText = "LED 1 On!"
     return value
 
 @st.cache_data(ttl=4, show_spinner=False)
@@ -232,10 +232,10 @@ def GetLED2Status() -> list:
         on = value[0]
         if on:
             st.session_state.LED2State = True
-            st.session_state.LED2ButtonText = "Turn LED 2 Off!"
+            st.session_state.LED2ButtonText = "LED 2 Off!"
         else:
             st.session_state.LED2State = False
-            st.session_state.LED2ButtonText = "Turn LED 2 On!"
+            st.session_state.LED2ButtonText = "LED 2 On!"
     return value
 
 if __name__ == "__main__":
