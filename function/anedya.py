@@ -17,27 +17,31 @@ def anedya_config(NODE_ID, API_KEY):
 
 def anedya_sendCommand(COMMAND_NAME, COMMAND_DATA):
     url = "https://api.anedya.io/v1/commands/send"
-    apiKey_in_formate = "Bearer " + apiKey
+    apiKey_in_format = "Bearer " + apiKey
 
     commandExpiry_time = int(time.time() + 518400) * 1000
 
-    payload = json.dumps(
-        {
-            "nodeid": nodeId,
-            "command": COMMAND_NAME,
-            "data": COMMAND_DATA,
-            "type": "string",
-            "expiry": commandExpiry_time,
-        }
-    )
-    headers = {"Content-Type": "application/json", "Authorization": apiKey_in_formate}
+    payload = json.dumps({
+        "nodeid": nodeId,
+        "command": COMMAND_NAME,
+        "data": COMMAND_DATA,
+        "type": "string",
+        "expiry": commandExpiry_time,
+    })
+    headers = {"Content-Type": "application/json", "Authorization": apiKey_in_format}
 
-    requests.request("POST", url, headers=headers, data=payload)
+    try:
+        response = requests.post(url, headers=headers, data=payload)
+        response.raise_for_status()  # Raise an exception for 4xx or 5xx errors
+    except requests.exceptions.RequestException as e:
+        print(f"Error sending command: {e}")
+        return None
 
+    return response
 
 def anedya_setValue(KEY, VALUE):
     url = "https://api.anedya.io/v1/valuestore/setValue"
-    apiKey_in_formate = "Bearer " + apiKey
+    apiKey_in_format = "Bearer " + apiKey
 
     payload = json.dumps({
         "namespace": {
@@ -51,17 +55,22 @@ def anedya_setValue(KEY, VALUE):
     headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        "Authorization": apiKey_in_formate
+        "Authorization": apiKey_in_format
     }
-    response = requests.request("POST", url, headers=headers, data=payload)
 
-    print(response.text)
+    try:
+        response = requests.post(url, headers=headers, data=payload)
+        response.raise_for_status()  # Raise an exception for 4xx or 5xx errors
+        print(response.text)
+    except requests.exceptions.RequestException as e:
+        print(f"Error setting value: {e}")
+        return None
+
     return response
-
 
 def anedya_getValue(KEY):
     url = "https://api.anedya.io/v1/valuestore/getValue"
-    apiKey_in_formate = "Bearer " + apiKey
+    apiKey_in_format = "Bearer " + apiKey
 
     payload = json.dumps({
         "namespace": {
@@ -73,22 +82,26 @@ def anedya_getValue(KEY):
     headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        "Authorization": apiKey_in_formate
+        "Authorization": apiKey_in_format
     }
 
-    response = requests.request("POST", url, headers=headers, data=payload)
-    responseMessage = response.text
-    print(responseMessage)
-    errorCode = json.loads(responseMessage).get("errorcode")
-    if errorCode == 0:
-        data = json.loads(responseMessage).get("value")
-        value = [data, 1]
-    else:
-        print(responseMessage)
+    try:
+        response = requests.post(url, headers=headers, data=payload)
+        response.raise_for_status()  # Raise an exception for 4xx or 5xx errors
+        response_message = response.text
+        print(response_message)
+        error_code = json.loads(response_message).get("errorcode")
+        if error_code == 0:
+            data = json.loads(response_message).get("value")
+            value = [data, 1]
+        else:
+            print(response_message)
+            value = [False, -1]
+    except requests.exceptions.RequestException as e:
+        print(f"Error getting value: {e}")
         value = [False, -1]
 
     return value
-
 
 def fetchHumidityData() -> pd.DataFrame:
     url = "https://api.anedya.io/v1/aggregates/variable/byTime"
@@ -156,6 +169,7 @@ def fetchHumidityData() -> pd.DataFrame:
     else:
         st.write(response_message)
         return pd.DataFrame()
+
 
 
 def fetchTemperatureData() -> pd.DataFrame:

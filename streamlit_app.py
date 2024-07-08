@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import altair as alt
+import requests 
 from streamlit_autorefresh import st_autorefresh
 
 from function.anedya import anedya_config
